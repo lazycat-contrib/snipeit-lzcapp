@@ -1,6 +1,6 @@
 package: community.lazycat.app.snipeit
 name: Snipe-IT
-version: 0.0.0
+version: 8.8.3
 description: "IT asset management for tracking hardware, licenses, accessories and who has them."
 min_os_version: "1.5.0"
 homepage: https://github.com/grokability/snipe-it
