@@ -1,0 +1,18 @@
+package: community.lazycat.app.snipeit
+name: Snipe-IT
+version: 0.0.0
+description: "IT asset management for tracking hardware, licenses, accessories and who has them."
+min_os_version: "1.5.0"
+homepage: https://github.com/grokability/snipe-it
+author: grokability
+license: AGPL-3.0
+permissions:
+  required:
+    - net.internet
+locales:
+  zh:
+    name: Snipe-IT
+    description: "IT 资产管理系统：登记电脑、显示器、许可证等资产，记录谁在用、什么时候归还、保修到期提醒。"
+  en:
+    name: Snipe-IT
+    description: "IT asset management for tracking hardware, licenses, accessories and who has them."

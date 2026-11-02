@@ -1,0 +1,75 @@
+application:
+  subdomain: snipeit
+  multi_instance: false
+  upstreams:
+    - location: /package-licenses/
+      backend: file:///lzcapp/pkg/content/licenses/
+    - location: /
+      backend: http://snipeit:80/
+
+services:
+  db:
+    image: docker.1ms.run/library/mysql:8.0
+    environment:
+      - |-
+        MYSQL_ROOT_PASSWORD={{ stable_secret "snipeit_db_root" | replace "\r" "" | replace "\n" "" }}
+      - MYSQL_DATABASE=snipeit
+      - MYSQL_USER=snipeit
+      - |-
+        MYSQL_PASSWORD={{ stable_secret "snipeit_db_password" | replace "\r" "" | replace "\n" "" }}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h 127.0.0.1 -u root -p"$$MYSQL_ROOT_PASSWORD"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    binds:
+      - /lzcapp/var/mysql:/var/lib/mysql
+
+  snipeit:
+    # upstream: snipe/snipe-it:v8.8.3
+    image: docker.1ms.run/snipe/snipe-it:v8.8.3
+    depends_on:
+      - db
+    environment:
+      - |-
+        APP_URL=https://{{ .S.AppDomain }}
+      - |-
+        APP_KEY=base64:{{ stable_secret "snipeit_app_key" | replace "\r" "" | replace "\n" "" }}
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_TIMEZONE=Asia/Shanghai
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=snipeit
+      - DB_USERNAME=snipeit
+      - |-
+        DB_PASSWORD={{ stable_secret "snipeit_db_password" | replace "\r" "" | replace "\n" "" }}
+      - SESSION_DRIVER=file
+      - CACHE_DRIVER=file
+      - TZ=Asia/Shanghai
+    binds:
+      - /lzcapp/var/storage:/var/lib/snipeit
+
+usage: |
+  Snipe-IT 是 IT 资产管理系统：登记电脑、显示器、许可证等资产，记录谁在用、何时归还。
+
+  使用方法：
+  1. 打开应用，会自动进入初始化向导（/setup），填写站点名、管理员邮箱和密码，创建第一个账号。
+  2. 建分类（category）和厂商，然后录入资产。
+  3. 把资产签出（checkout）给使用者，归还时签入；配套的保修到期会提醒。
+
+  数据与安全：
+  - 数据库在 MySQL（/lzcapp/var/mysql），上传的资产图片和附件在 /lzcapp/var/storage。
+    卸载应用会一并删除，请定期备份。
+  - 数据库密码与应用密钥由平台稳定密钥生成，每个部署不同，不写成固定值。
+  - 本包不预置任何账号或默认口令；初始化向导只在尚未安装时出现，完成后自动跳转登录页。
+  - 应用经懒猫入口鉴权访问。
+
+  说明：
+  - 本应用包含两个容器（应用本体 + MySQL），启动顺序由依赖关系保证。
+  - 未配置邮件服务，找回密码、邮件通知等依赖邮件的功能不可用。
+  - 未做真机验证：初始化向导、登录、录入资产、签出签入以及重启后持久化均未在设备上实测。
